@@ -1,7 +1,5 @@
 // Backtrack the puzzle starting with the fields of lowest valid numbers to be filled in, and check adjacent rows and columns for the box we use (box which the element is inside of)
 
-use std::time::Instant;
-
 use crate::*;
 
 /// Start solving the puzzle
@@ -38,6 +36,8 @@ fn check_adjacent_lines(board: &Board, moves: LowestValid) -> Vec<u32> {
 
 #[test]
 fn able_to_solve() {
+    use std::time::Instant;
+    
     let board = Board::load_game(include_str!("games/game.setup"), 0).unwrap();
 
     let i = Instant::now();

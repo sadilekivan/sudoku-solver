@@ -1,7 +1,5 @@
 // Backtrack the puzzle starting with the fields of lowest valid numbers to be filled in
 
-use std::time::Instant;
-
 use crate::*;
 
 /// Start solving the puzzle
@@ -32,6 +30,8 @@ fn _solve(board: &mut Board) -> bool {
 
 #[test]
 fn able_to_solve() {
+    use std::time::Instant;
+    
     let board = Board::load_game(include_str!("games/game.setup"), 0).unwrap();
 
     let i = Instant::now();

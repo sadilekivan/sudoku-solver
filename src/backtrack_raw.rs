@@ -1,5 +1,3 @@
-use std::time::Instant;
-
 // Raw backtracking fields one by one, left to right, top to bottom
 // Resources
 // https://gist.github.com/syphh/62e6140361feb2d7196f2cb050c987b3
@@ -52,6 +50,8 @@ fn _solve(board: &mut Board, row: usize, col: usize) -> bool {
 
 #[test]
 fn able_to_solve() {
+    use std::time::Instant;
+    
     let board = Board::load_game(include_str!("games/game.setup"), 0).unwrap();
 
     let i = Instant::now();
