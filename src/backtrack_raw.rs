@@ -4,38 +4,6 @@
 // https://www.youtube.com/watch?v=G_UYXzGuqvM
 use crate::*;
 
-fn is_valid(board: &Board, row: usize, col: usize, n: u32) -> bool {
-    // Check fields in row
-    for i in 0..9 {
-        let p_row = Point::new(row, i);  
-        if board[p_row] == n {
-            return false;
-        }
-    }
-
-
-    // Check fields in column
-    for i in 0..9 {
-        let p_col = Point::new(i, col);
-        if board[p_col] == n {
-            return false;
-        }
-    }
-
-    let offset = Point::new(row, col) / 3 * 3;
-    // Check fields in subgrid
-    for row in 0..3 {
-        for col in 0..3 {
-            let p = Point::new(row, col) + offset;
-            if board[p] == n {
-                return false;
-            }
-        }
-    }
-
-    return true;
-}
-
 /// Start solving the puzzle
 pub fn solve(mut board: Board, steps: &mut usize) -> Option<Board> {
     if _solve(&mut board, 0, 0, steps) {
@@ -81,14 +49,14 @@ fn _solve(board: &mut Board, row: usize, col: usize, steps: &mut usize) -> bool 
 }
 
 #[test]
-fn game1() {
-    let board = Board::load_game(include_str!("games/game1.setup"));
+fn able_to_solve() {
+    let board = Board::load_game(include_str!("games/game.setup"), 0).unwrap();
 
     let mut steps = 0;
     let board_s = solve(board, &mut steps).unwrap();
     println!("solution took {steps} solve steps");
 
-    let solution = Board::load_game(include_str!("games/game1.solution"));
+    let solution = Board::load_game(include_str!("games/game.solution"), 0).unwrap();
 
     assert_eq!(board_s, solution);
 }
