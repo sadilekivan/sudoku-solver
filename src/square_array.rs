@@ -1,8 +1,17 @@
 use std::{iter::FilterMap, ops::{Add, Div, Index, IndexMut, Mul}};
 
 // TODO: think about storing a flat array of 81 elements because then we can deref to a iter thanks to impl<T> [T] pub fn iter(&self) -> Iter<'_, T>
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct SquareArray<const S: usize> (pub [[u32; S]; S]);
+#[derive(Debug, Clone, Copy)]
+pub struct SquareArray<const S: usize> {
+    pub data: [[u32; S]; S],
+    steps: u32
+}
+
+impl<const S: usize> PartialEq for SquareArray<S> {
+    fn eq(&self, other: &Self) -> bool {
+        self.data == other.data
+    }
+}
 
 impl SquareArray<9> {
     pub fn load_game(data: &str, game_id: usize) -> Result<Self, String> {
@@ -18,11 +27,20 @@ impl SquareArray<9> {
 
         Ok(board)
     }
+
+    pub fn set(&mut self, p: Point, n: u32) {
+        self[p] = n;
+        self.steps += 1;
+    }
+
+    pub fn get_steps(&self) -> u32 {
+        self.steps
+    }
 }
 
 impl<const S: usize> Default for SquareArray<S> {
     fn default() -> Self {
-        Self([[0; S]; S])
+        Self { data: [[0; S]; S], steps: 0 }
     }
 }
 
@@ -30,13 +48,13 @@ impl<const S: usize> Index<Point> for SquareArray<S> {
     type Output = u32;
 
     fn index(&self, index: Point) -> &Self::Output {
-        &self.0[index.x][index.y]
+        &self.data[index.x][index.y]
     }
 }
 
 impl<const S: usize> IndexMut<Point> for SquareArray<S> {
     fn index_mut(&mut self, index: Point) -> &mut Self::Output {
-        &mut self.0[index.x][index.y]
+        &mut self.data[index.x][index.y]
     }
 }
 

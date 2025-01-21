@@ -2,9 +2,10 @@ pub mod square_array;
 pub mod board;
 pub mod backtrack_raw;
 pub mod backtrack_lvn;
+pub mod backtrack_lvnach;
 
-use square_array::*;
-use board::*;
+pub use square_array::*;
+pub use board::*;
 
 fn is_valid(board: &Board, row: usize, col: usize, n: u32) -> bool {
     // Check fields in row
@@ -100,14 +101,7 @@ fn first_lowest_valid(board: &Board) -> Option<LowestValid> {
 fn game_many() {
     for game_id in 0..1000 {
         let board = Board::load_game(include_str!("games/puzzles1_unbiased"), game_id).unwrap();
-        let mut steps_raw = 0;
-        backtrack_raw::solve(board, &mut steps_raw).ok_or("puzzle has no solutions").unwrap();
-        let mut steps_lvn = 0;
-        backtrack_lvn::solve(board, &mut steps_lvn).ok_or("puzzle has no solutions").unwrap();
-        let ratio = steps_raw as f32 / steps_lvn as f32;
-        println!("{ratio:.2}");
-        if ratio < 1.0 {
-            board.draw_board();
-        }
+        backtrack_raw::solve(board).ok_or("puzzle has no solutions").unwrap();
+        backtrack_lvn::solve(board).ok_or("puzzle has no solutions").unwrap();
     }
 }

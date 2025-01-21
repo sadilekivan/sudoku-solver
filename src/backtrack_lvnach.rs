@@ -1,4 +1,4 @@
-// Backtrack the puzzle starting with the fields of lowest valid numbers to be filled in
+// Backtrack the puzzle starting with the fields of lowest valid numbers to be filled in, and check adjacent rows and columns for the box we use (box which the element is inside of)
 
 use std::time::Instant;
 
@@ -15,6 +15,7 @@ pub fn solve(mut board: Board) -> Option<Board> {
 
 fn _solve(board: &mut Board) -> bool {
     if let Some(lv) = first_lowest_valid(board) {
+
         for vm in lv.valid_moves {
             board.set(lv.p, vm);
 
@@ -28,6 +29,11 @@ fn _solve(board: &mut Board) -> bool {
     } else {
         return true;
     }
+}
+
+// Filter some possible moves based on the rules of a box
+fn check_adjacent_lines(board: &Board, moves: LowestValid) -> Vec<u32> {
+    moves.valid_moves
 }
 
 #[test]
