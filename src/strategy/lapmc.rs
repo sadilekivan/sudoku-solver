@@ -1,5 +1,7 @@
 use crate::{Point, SudokuBoard, SudokuSolver};
 
+// TODO implement checking for constraining, for now same funcionality as Lap
+
 /// Least Amount Possible, Most Constraining
 /// 
 /// Solve puzzle targeting fields with least amount of possible numbers and if filled constraining most amount of empty cells
