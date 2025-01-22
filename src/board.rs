@@ -5,7 +5,7 @@ pub type Board = SquareArray<9>;
 impl Board {
     pub fn draw_board(&self) {
         println!("┏━━━┯━━━┯━━━┳━━━┯━━━┯━━━┳━━━┯━━━┯━━━┓");
-        for (row_i, row) in self.data.iter().enumerate() {
+        for (row_i, row) in self.0.iter().enumerate() {
             print!("┃");
             for (col_i, el) in row.iter().enumerate() {
                 

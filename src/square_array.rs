@@ -1,20 +1,10 @@
-use std::{iter::FilterMap, ops::{Add, Div, Index, IndexMut, Mul}};
+use std::ops::{Add, Div, Index, IndexMut, Mul};
+use crate::{Board, SudokuBoard};
 
-use crate::Board;
-
-// TODO: think about storing a flat array of 81 elements because then we can deref to a iter thanks to impl<T> [T] pub fn iter(&self) -> Iter<'_, T>
-#[derive(Debug, Clone, Copy)]
-pub struct SquareArray<const S: usize> {
-    pub data: [[u32; S]; S],
-    solve_steps: u32,
-    backtrack_steps: u32
-}
-
-impl<const S: usize> PartialEq for SquareArray<S> {
-    fn eq(&self, other: &Self) -> bool {
-        self.data == other.data
-    }
-}
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SquareArray<const S: usize>(
+    pub [[u32; S]; S]
+);
 
 impl Board {
     pub fn load_game(data: &str) -> Result<Vec<Self>, String> {
@@ -34,29 +24,25 @@ impl Board {
         
         Ok(game_v)
     }
+}
 
-    pub fn set(&mut self, p: Point, n: u32) {
+impl SudokuBoard for Board {
+    fn write(&mut self, p: Point, n: u32) {
         self[p] = n;
-        self.solve_steps += 1;
     }
 
-    pub fn clear(&mut self, p: Point) {
+    fn clear(&mut self, p: Point) {
         self[p] = 0;
-        self.backtrack_steps += 1;
     }
 
-    pub fn get_solve_steps(&self) -> u32 {
-        self.solve_steps
-    }
-
-    pub fn get_backtrack_steps(&self) -> u32 {
-        self.backtrack_steps
+    fn read(&mut self, p: Point) -> u32 {
+        self[p]
     }
 }
 
 impl<const S: usize> Default for SquareArray<S> {
     fn default() -> Self {
-        Self { data: [[0; S]; S], solve_steps: 0, backtrack_steps: 0 }
+        Self ([[0; S]; S])
     }
 }
 
@@ -64,13 +50,13 @@ impl<const S: usize> Index<Point> for SquareArray<S> {
     type Output = u32;
 
     fn index(&self, index: Point) -> &Self::Output {
-        &self.data[index.x][index.y]
+        &self.0[index.x][index.y]
     }
 }
 
 impl<const S: usize> IndexMut<Point> for SquareArray<S> {
     fn index_mut(&mut self, index: Point) -> &mut Self::Output {
-        &mut self.data[index.x][index.y]
+        &mut self.0[index.x][index.y]
     }
 }
 
@@ -133,21 +119,6 @@ pub struct SquareArrayIter<const S: usize> {
     p: Point
 }
 
-impl<const S: usize> SquareArrayIter<S> {
-    pub fn is_filled(field: (Point, u32)) -> Option<(Point, u32)> {
-        if field.1 == 0 {
-            Some(field)
-        } else {
-            None
-        }
-    }
-
-    // Filters out fields which already have a number, we only preserve fields with 0 value
-    pub fn skip_filled(self) -> FilterMap<Self, fn((Point, u32)) -> Option<(Point, u32)>> {
-        self.filter_map(Self::is_filled)
-    }
-}
-
 impl<const S: usize> IntoIterator for SquareArray<S> {
     type Item = (Point, u32);
 
@@ -176,5 +147,67 @@ impl<const S: usize> Iterator for SquareArrayIter<S> {
             self.p.y += 1;
         }
         Some((p, n)) 
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Tracked<T: SudokuBoard> {
+    inner: T,
+    write_count: u32,
+    clear_count: u32,
+    read_count: u32
+}
+
+impl<T: SudokuBoard> Tracked<T> {
+    pub fn get_write_count(&self) -> u32 {
+        self.write_count
+    }
+
+    pub fn get_clear_count(&self) -> u32 {
+        self.clear_count
+    }
+
+    pub fn get_read_count(&self) -> u32 {
+        self.read_count
+    }
+}
+
+impl<T: SudokuBoard> PartialEq for Tracked<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.inner == other.inner
+    }
+}
+
+impl<T: SudokuBoard> SudokuBoard for Tracked<T> {
+    fn write(&mut self, p: Point, n: u32) {
+        self.write_count += 1;
+        self.inner.write(p, n);
+    }
+
+    fn clear(&mut self, p: Point) {
+        self.clear_count += 1;
+        self.inner.clear(p);
+    }
+
+    fn read(&mut self, p: Point) -> u32 {
+        self.read_count += 1;
+        self.inner.read(p)
+    }
+}
+
+impl<T: SudokuBoard> IntoIterator for Tracked<T> {
+    type Item = (Point, u32);
+
+    type IntoIter = SquareArrayIter<9>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.inner.into_iter()
+    }
+}
+
+
+impl From<Board> for Tracked<Board> {
+    fn from(value: Board) -> Self {
+        Tracked { inner: value, write_count: 0, clear_count: 0, read_count: 0 }
     }
 }

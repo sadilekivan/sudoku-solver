@@ -1,17 +1,17 @@
-use crate::{SudokuSolver, Board, Point};
+use crate::{Point, SudokuBoard, SudokuSolver};
 
 /// Least Amount Possible, Most Constraining
 /// 
 /// Solve puzzle targeting fields with least amount of possible numbers and if filled constraining most amount of empty cells
 struct LapMc;
 
-fn get_valid_numbers(board: &Board, p: Point) -> Vec<u32> {
+fn get_valid_numbers(board: &mut impl SudokuBoard, p: Point) -> Vec<u32> {
     let mut valid_number_v: Vec<u32> = (1..=9).collect();
     for i in 0..9 {
         // Retain keeps elements if true, so lets reverse it with a not and use conditions like a filter
         let p_row = p.with_y(i);
         let p_col = p.with_x(i);
-        valid_number_v.retain(|n| !(*n == board[p_row] || *n == board[p_col]));
+        valid_number_v.retain(|n| !(*n == board.read(p_row) || *n == board.read(p_col)));
     }
 
     let offset = p / 3 * 3;
@@ -20,7 +20,7 @@ fn get_valid_numbers(board: &Board, p: Point) -> Vec<u32> {
     for row in 0..3 {
         for col in 0..3 {
             let p = Point::new(row, col) + offset;
-            valid_number_v.retain(|n| !(*n == board[p]));
+            valid_number_v.retain(|n| !(*n == board.read(p)));
         }
     }
     valid_number_v
@@ -40,8 +40,8 @@ impl LowestValid {
 }
 
 // Find the first field with the lowest valid numbers to be filled, left to right, top to bottom
-fn first_lowest_valid(board: &Board) -> Option<LowestValid> {
-    let v: Vec<LowestValid> = board.into_iter().skip_filled().map(|(p, _)| 
+fn first_lowest_valid(board: &mut impl SudokuBoard) -> Option<LowestValid> {
+    let v: Vec<LowestValid> = board.into_iter().filter_map(|f| if f.1 == 0 {Some(f)} else {None} ).map(|(p, _)| 
         LowestValid::new(p, get_valid_numbers(board, p))
     ).collect();
 
@@ -62,13 +62,13 @@ fn first_lowest_valid(board: &Board) -> Option<LowestValid> {
 }
 
 impl LapMc {
-    fn _solve(board: &mut Board) -> bool {
+    fn solve_step(board: &mut impl SudokuBoard) -> bool {
         if let Some(lv) = first_lowest_valid(board) {
 
             for vm in lv.valid_moves {
-                board.set(lv.p, vm);
+                board.write(lv.p, vm);
 
-                if Self::_solve(board) {
+                if Self::solve_step(board) {
                     return true;
                 };
 
@@ -81,10 +81,9 @@ impl LapMc {
     }
 }
 
-impl SudokuSolver for LapMc {
-    /// Start solving the puzzle
-    fn solve(mut board: Board) -> Option<Board> {
-        if Self::_solve(&mut board) {
+impl<T: SudokuBoard> SudokuSolver<T> for LapMc {
+    fn solve(mut board: T) -> Option<T> {
+        if Self::solve_step(&mut board) {
             return Some(board)
         } else {
             return None

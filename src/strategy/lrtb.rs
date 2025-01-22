@@ -1,4 +1,4 @@
-use crate::{SudokuSolver, Board, Point};
+use crate::{Point, SudokuBoard, SudokuSolver};
 
 /// Left to right, top to bottom
 /// 
@@ -9,11 +9,11 @@ use crate::{SudokuSolver, Board, Point};
 /// https://www.youtube.com/watch?v=G_UYXzGuqvM
 struct Lrtb;
 
-fn is_valid(board: &Board, row: usize, col: usize, n: u32) -> bool {
+fn is_valid(board: &mut impl SudokuBoard, row: usize, col: usize, n: u32) -> bool {
     // Check fields in row
     for i in 0..9 {
         let p_row = Point::new(row, i);  
-        if board[p_row] == n {
+        if board.read(p_row) == n {
             return false;
         }
     }
@@ -22,7 +22,7 @@ fn is_valid(board: &Board, row: usize, col: usize, n: u32) -> bool {
     // Check fields in column
     for i in 0..9 {
         let p_col = Point::new(i, col);
-        if board[p_col] == n {
+        if board.read(p_col) == n {
             return false;
         }
     }
@@ -32,7 +32,7 @@ fn is_valid(board: &Board, row: usize, col: usize, n: u32) -> bool {
     for row in 0..3 {
         for col in 0..3 {
             let p = Point::new(row, col) + offset;
-            if board[p] == n {
+            if board.read(p) == n {
                 return false;
             }
         }
@@ -45,7 +45,7 @@ impl Lrtb {
     /// Use `solve` for solving the puzzle
     /// # Returns
     /// boolean if able to continue in another solve step
-    fn solve_step(board: &mut Board, row: usize, col: usize) -> bool {
+    fn solve_step(board: &mut impl SudokuBoard, row: usize, col: usize) -> bool {
         let p = Point::new(row, col);
         if row == 9 {
             // Over max rows, we are done
@@ -53,7 +53,7 @@ impl Lrtb {
         } else if col == 9 {
             // Over max columns go to next row
             return Self::solve_step(board, row + 1, 0);
-        } else if board[p] != 0 {
+        } else if board.read(p) != 0 {
             // This is a preset number, continue
             return Self::solve_step(board, row, col + 1);
         } else {
@@ -61,7 +61,7 @@ impl Lrtb {
             for n in 1..10 {
                 if is_valid(board, row, col, n) {
                     // This one fits
-                    board.set(p, n);
+                    board.write(p, n);
 
                     // Lets continue
                     if Self::solve_step(board, row, col + 1) {
@@ -78,9 +78,8 @@ impl Lrtb {
     }
 }
 
-impl SudokuSolver for Lrtb {
-    /// Start solving the puzzle
-    fn solve(mut board: Board) -> Option<Board> {
+impl<T: SudokuBoard> SudokuSolver<T> for Lrtb {
+    fn solve(mut board: T) -> Option<T> {
         if Self::solve_step(&mut board, 0, 0) {
             return Some(board)
         } else {
