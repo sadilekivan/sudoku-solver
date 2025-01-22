@@ -4,6 +4,7 @@ pub mod lrtb;
 pub mod lap;
 pub mod lapmc;
 
+#[allow(dead_code)]
 fn test_case<S: SudokuSolver>() {
     let setup_v = Board::load_game(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/games/easy50_by_projecteuler-p096.setup"))).unwrap();
     let solution_v = Board::load_game(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/games/easy50_by_projecteuler-p096.solution"))).unwrap();
