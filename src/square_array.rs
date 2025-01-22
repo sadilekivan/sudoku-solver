@@ -1,10 +1,13 @@
 use std::{iter::FilterMap, ops::{Add, Div, Index, IndexMut, Mul}};
 
+use crate::Board;
+
 // TODO: think about storing a flat array of 81 elements because then we can deref to a iter thanks to impl<T> [T] pub fn iter(&self) -> Iter<'_, T>
 #[derive(Debug, Clone, Copy)]
 pub struct SquareArray<const S: usize> {
     pub data: [[u32; S]; S],
-    steps: u32
+    solve_steps: u32,
+    backtrack_steps: u32
 }
 
 impl<const S: usize> PartialEq for SquareArray<S> {
@@ -13,34 +16,47 @@ impl<const S: usize> PartialEq for SquareArray<S> {
     }
 }
 
-impl SquareArray<9> {
-    pub fn load_game(data: &str, game_id: usize) -> Result<Self, String> {
+impl Board {
+    pub fn load_game(data: &str) -> Result<Vec<Self>, String> {
         let data = data.lines().collect::<Vec<_>>();
 
-        let game = data.get(game_id).ok_or(format!("Game with index {game_id} does not exist"))?.chars();
-        // Create empty board
-        let mut board: SquareArray<9> = Default::default();
-        // Load all elements into board
-        for (el, ch) in board.into_iter().zip(game) {
-            board[el.0] = ch.to_digit(10).unwrap_or(0);
-        }
-
-        Ok(board)
+        let game_v: Vec<Self> = data.into_iter().map(
+            |game_string|
+            {
+                let mut board: Self = Default::default();
+                // Load all elements into board
+                for (el, ch) in board.into_iter().zip(game_string.chars()) {
+                    board[el.0] = ch.to_digit(10).unwrap_or(0);
+                }
+                board
+            }
+        ).collect();
+        
+        Ok(game_v)
     }
 
     pub fn set(&mut self, p: Point, n: u32) {
         self[p] = n;
-        self.steps += 1;
+        self.solve_steps += 1;
     }
 
-    pub fn get_steps(&self) -> u32 {
-        self.steps
+    pub fn clear(&mut self, p: Point) {
+        self[p] = 0;
+        self.backtrack_steps += 1;
+    }
+
+    pub fn get_solve_steps(&self) -> u32 {
+        self.solve_steps
+    }
+
+    pub fn get_backtrack_steps(&self) -> u32 {
+        self.backtrack_steps
     }
 }
 
 impl<const S: usize> Default for SquareArray<S> {
     fn default() -> Self {
-        Self { data: [[0; S]; S], steps: 0 }
+        Self { data: [[0; S]; S], solve_steps: 0, backtrack_steps: 0 }
     }
 }
 

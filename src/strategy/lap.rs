@@ -1,12 +1,9 @@
-pub mod square_array;
-pub mod board;
-pub mod strategy;
-pub use square_array::*;
-pub use board::*;
+use crate::{SudokuSolver, Board, Point};
 
-pub trait SudokuSolver {
-    fn solve(board: Board) -> Option<Board>;
-}
+/// Least Amount Possible
+/// 
+/// Solve puzzle targeting fields with least amount of possible numbers
+struct Lap;
 
 fn get_valid_numbers(board: &Board, p: Point) -> Vec<u32> {
     let mut valid_number_v: Vec<u32> = (1..=9).collect();
@@ -64,3 +61,38 @@ fn first_lowest_valid(board: &Board) -> Option<LowestValid> {
     Some(lowest_valid)
 }
 
+impl Lap {
+    fn _solve(board: &mut Board) -> bool {
+        if let Some(lv) = first_lowest_valid(board) {
+
+            for vm in lv.valid_moves {
+                board.set(lv.p, vm);
+
+                if Self::_solve(board) {
+                    return true;
+                };
+
+                board.clear(lv.p);
+            }
+            return false;
+        } else {
+            return true;
+        }
+    }
+}
+
+impl SudokuSolver for Lap {
+    /// Start solving the puzzle
+    fn solve(mut board: Board) -> Option<Board> {
+        if Self::_solve(&mut board) {
+            return Some(board)
+        } else {
+            return None
+        }
+    }
+}
+
+#[test]
+fn able_to_solve() {
+    crate::strategy::test_case::<Lap>();
+}

@@ -34,4 +34,11 @@ impl Board {
         }
         println!("┗━━━┷━━━┷━━━┻━━━┷━━━┷━━━┻━━━┷━━━┷━━━┛");
     }
+
+    pub fn print_board(&self) {
+        for (_, n) in self.into_iter() {
+            print!("{n}");
+        }
+        println!("");
+    }
 }
