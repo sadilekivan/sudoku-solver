@@ -1,24 +1,46 @@
-use crate::{Board, SudokuSolver, Tracked};
+use glam::Vec3;
 
-pub mod lrtb;
-pub mod lap;
-pub mod lapmc;
+use crate::{
+    board_tracker::{SudokuSolverTelemetry, TrackedSudokuBoard},
+    sudoku_board::{SudokuBoard, SudokuBoardOps},
+};
 
-#[allow(dead_code)]
-fn test_case<S: SudokuSolver<Tracked<Board>>>() {
-    let setup_v = Board::load_game(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/games/easy50_by_projecteuler-p096.setup"))).unwrap().into_iter().map(Tracked::<Board>::from).collect::<Vec<Tracked<Board>>>();
-    let solution_v = Board::load_game(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/games/easy50_by_projecteuler-p096.solution"))).unwrap().into_iter().map(Tracked::<Board>::from).collect::<Vec<Tracked<Board>>>();
+pub mod linear_backtracking;
+pub mod minimal_choice_backtracking;
 
-    let mut solve_steps_v: Vec<u32> = Default::default();
-    let mut backtrack_steps_v: Vec<u32> = Default::default();
+pub trait SudokuSolver<T: SudokuBoardOps> {
+    fn solve(board: T) -> Option<T>;
+}
 
-    for (id, (setup, solution)) in setup_v.into_iter().zip(solution_v).enumerate() {
-        let my_solution = S::solve(setup).unwrap();
-        
-        solve_steps_v.push(my_solution.get_write_count());
-        backtrack_steps_v.push(my_solution.get_clear_count());
-        assert_eq!(my_solution, solution, "testing puzzle {id}");
+pub fn run_sudoku_solver<S: SudokuSolver<TrackedSudokuBoard>>() {
+    let game_setup_v = SudokuBoard::load_games_old(include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/games/easy50_by_projecteuler-p096.setup"
+    )))
+    .unwrap()
+    .into_iter()
+    .map(TrackedSudokuBoard::from)
+    .collect::<Vec<TrackedSudokuBoard>>();
+    let solution_v = SudokuBoard::load_games_old(include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/games/easy50_by_projecteuler-p096.solution"
+    )))
+    .unwrap()
+    .into_iter()
+    .collect::<Vec<SudokuBoard>>();
+
+    let mut telemetry_vec: Vec<SudokuSolverTelemetry> = Vec::new();
+
+    for (id, (setup, solution)) in game_setup_v.into_iter().zip(solution_v).enumerate() {
+        let my_solution = S::solve(setup).expect("Could not solve puzzle!");
+
+        telemetry_vec.push(my_solution.get_telemetry());
+        assert_eq!(my_solution.inner, solution, "testing puzzle {id}");
     }
 
-    println!("{:?}/{:?} average [solve/backtrack] steps", solve_steps_v.iter().sum::<u32>() as f32 / solve_steps_v.len() as f32, backtrack_steps_v.iter().sum::<u32>() as f32 / backtrack_steps_v.len() as f32);
+    let samples: f32 = telemetry_vec.len() as f32;
+    let telemetry_sum: Vec3 = telemetry_vec.into_iter().map(Vec3::from).sum();
+    let telemetry_avg: SudokuSolverTelemetry = (telemetry_sum / samples).into();
+
+    dbg!(telemetry_avg);
 }
