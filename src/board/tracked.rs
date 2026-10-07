@@ -2,16 +2,18 @@ use glam::USizeVec2;
 use glam::Vec3;
 use std::cell::Cell;
 
-use crate::sudoku_board::{SudokuBoard, SudokuBoardOps};
+use crate::board::Board;
+use crate::board::BoardOps;
+use crate::board::BOARD_CELLS;
 
 #[derive(Debug, Clone, Copy)]
-pub struct SudokuSolverTelemetry {
+pub struct SolverTelemetry {
     pub write_count: f32,
     pub clear_count: f32,
     pub read_count: f32,
 }
 
-impl SudokuSolverTelemetry {
+impl SolverTelemetry {
     fn new() -> Self {
         Vec3::ZERO.into()
     }
@@ -29,15 +31,15 @@ impl SudokuSolverTelemetry {
     }
 }
 
-impl Default for SudokuSolverTelemetry {
+impl Default for SolverTelemetry {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl From<Vec3> for SudokuSolverTelemetry {
+impl From<Vec3> for SolverTelemetry {
     fn from(value: Vec3) -> Self {
-        SudokuSolverTelemetry {
+        SolverTelemetry {
             write_count: value.x,
             clear_count: value.y,
             read_count: value.z,
@@ -45,8 +47,8 @@ impl From<Vec3> for SudokuSolverTelemetry {
     }
 }
 
-impl From<SudokuSolverTelemetry> for Vec3 {
-    fn from(val: SudokuSolverTelemetry) -> Self {
+impl From<SolverTelemetry> for Vec3 {
+    fn from(val: SolverTelemetry) -> Self {
         Vec3 {
             x: val.write_count,
             y: val.clear_count,
@@ -57,12 +59,12 @@ impl From<SudokuSolverTelemetry> for Vec3 {
 
 #[derive(Debug, Clone)]
 pub struct TrackedSudokuBoard {
-    pub inner: SudokuBoard,
-    telemetry: Cell<SudokuSolverTelemetry>,
+    pub inner: Board,
+    telemetry: Cell<SolverTelemetry>,
 }
 
 impl TrackedSudokuBoard {
-    pub fn get_telemetry(&self) -> SudokuSolverTelemetry {
+    pub fn get_telemetry(&self) -> SolverTelemetry {
         self.telemetry.take()
     }
 }
@@ -73,16 +75,16 @@ impl PartialEq for TrackedSudokuBoard {
     }
 }
 
-impl From<SudokuBoard> for TrackedSudokuBoard {
-    fn from(value: SudokuBoard) -> Self {
+impl From<Board> for TrackedSudokuBoard {
+    fn from(value: Board) -> Self {
         TrackedSudokuBoard {
             inner: value,
-            telemetry: Cell::new(SudokuSolverTelemetry::new()),
+            telemetry: Cell::new(SolverTelemetry::new()),
         }
     }
 }
 
-impl SudokuBoardOps for TrackedSudokuBoard {
+impl BoardOps for TrackedSudokuBoard {
     fn write(&mut self, pos: USizeVec2, value: u8) {
         let mut telemetry = self.telemetry.get();
         telemetry.tick_write();
@@ -104,11 +106,11 @@ impl SudokuBoardOps for TrackedSudokuBoard {
         self.inner.clear(pos);
     }
 
-    fn get(&self) -> &[u8; crate::sudoku_board::BOARD_CELLS] {
+    fn get(&self) -> &[u8; BOARD_CELLS] {
         &self.inner.0
     }
 
-    fn get_mut(&mut self) -> &mut [u8; crate::sudoku_board::BOARD_CELLS] {
+    fn get_mut(&mut self) -> &mut [u8; BOARD_CELLS] {
         &mut self.inner.0
     }
 }

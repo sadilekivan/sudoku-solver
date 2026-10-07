@@ -1,13 +1,13 @@
 use glam::USizeVec2;
 
-use crate::{strategy::SudokuSolver, sudoku_board::SudokuBoardOps};
+use crate::{board::BoardOps, solver::Solver};
 
 /// Least Amount Possible
 ///
 /// Solve puzzle targeting fields with least amount of possible numbers
 pub struct MinimalChoiceBacktracking;
 
-fn get_valid_numbers(board: &impl SudokuBoardOps, pos: USizeVec2) -> Vec<u8> {
+fn get_valid_numbers(board: &impl BoardOps, pos: USizeVec2) -> Vec<u8> {
     let mut valid_number_v: Vec<u8> = (1..=9).collect();
     for i in 0..9 {
         // Retain keeps elements if true, so lets reverse it with a not and use conditions like a filter
@@ -42,7 +42,7 @@ impl LowestValid {
 }
 
 // Find the first field with the lowest valid numbers to be filled, left to right, top to bottom
-fn first_lowest_valid(board: &impl SudokuBoardOps) -> Option<LowestValid> {
+fn first_lowest_valid(board: &impl BoardOps) -> Option<LowestValid> {
     board
         .iter()
         .filter(|(_, field_value)| **field_value == 0) // Filter out empty fields
@@ -51,7 +51,7 @@ fn first_lowest_valid(board: &impl SudokuBoardOps) -> Option<LowestValid> {
 }
 
 impl MinimalChoiceBacktracking {
-    fn solve_step(board: &mut impl SudokuBoardOps) -> bool {
+    fn solve_step(board: &mut impl BoardOps) -> bool {
         if let Some(lowest_valid) = first_lowest_valid(board) {
             for vm in lowest_valid.valid_moves {
                 board.write(lowest_valid.pos, vm);
@@ -69,7 +69,7 @@ impl MinimalChoiceBacktracking {
     }
 }
 
-impl<T: SudokuBoardOps> SudokuSolver<T> for MinimalChoiceBacktracking {
+impl<T: BoardOps> Solver<T> for MinimalChoiceBacktracking {
     fn solve(mut board: T) -> Option<T> {
         if Self::solve_step(&mut board) {
             Some(board)
@@ -79,7 +79,10 @@ impl<T: SudokuBoardOps> SudokuSolver<T> for MinimalChoiceBacktracking {
     }
 }
 
+#[cfg(test)]
 #[test]
-fn able_to_solve() {
-    crate::strategy::run_sudoku_solver::<MinimalChoiceBacktracking>();
+fn run_solver() {
+    use crate::solver::test::run_tracked_solver;
+
+    run_tracked_solver::<MinimalChoiceBacktracking>();
 }

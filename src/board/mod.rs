@@ -5,16 +5,20 @@ use glam::USizeVec2;
 pub const BOARD_SIZE: usize = 9;
 pub const BOARD_CELLS: usize = BOARD_SIZE * BOARD_SIZE;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct SudokuBoard(pub [u8; BOARD_CELLS]);
+#[cfg(test)]
+pub mod tracked;
 
-impl Default for SudokuBoard {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Sudoku board wrapper, indexable with cardinal position
+pub struct Board(pub [u8; BOARD_CELLS]);
+
+impl Default for Board {
     fn default() -> Self {
         Self([0; BOARD_CELLS])
     }
 }
 
-impl Index<USizeVec2> for SudokuBoard {
+impl Index<USizeVec2> for Board {
     type Output = u8;
 
     fn index(&self, pos: USizeVec2) -> &Self::Output {
@@ -22,7 +26,7 @@ impl Index<USizeVec2> for SudokuBoard {
     }
 }
 
-impl IndexMut<USizeVec2> for SudokuBoard {
+impl IndexMut<USizeVec2> for Board {
     fn index_mut(&mut self, pos: USizeVec2) -> &mut Self::Output {
         let idx = cardinal_into_flat_index(pos);
         &mut self.0[idx]
@@ -39,11 +43,11 @@ pub fn cardinal_into_flat_index(pos: USizeVec2) -> usize {
     pos.y * BOARD_SIZE + pos.x
 }
 
-impl SudokuBoard {
+impl Board {
     /// Converts a 1D flat array index into 2D grid coordinates (column x, row y).
     pub fn load_game(data: &str) -> Result<Self, String> {
         let mut game_data_iter = data.chars().map(|ch| ch.to_digit(10).unwrap_or(0) as u8);
-        let mut board: SudokuBoard = Default::default();
+        let mut board: Board = Default::default();
 
         for field_value in board.0.iter_mut() {
             if let Some(value) = game_data_iter.next() {
@@ -116,7 +120,8 @@ impl SudokuBoard {
     }
 }
 
-pub trait SudokuBoardOps
+/// Operations to manipulate a sudoku board
+pub trait BoardOps
 where
     Self: std::fmt::Debug + PartialEq,
 {
@@ -186,7 +191,7 @@ where
     }
 }
 
-impl SudokuBoardOps for SudokuBoard {
+impl BoardOps for Board {
     fn get(&self) -> &[u8; BOARD_CELLS] {
         &self.0
     }

@@ -1,6 +1,6 @@
 use glam::USizeVec2;
 
-use crate::{strategy::SudokuSolver, sudoku_board::SudokuBoardOps};
+use crate::{board::BoardOps, solver::Solver};
 
 /// Solve puzzle by solving fields sequentialy one after another without a jump
 /// Left to right, top to bottom
@@ -14,7 +14,7 @@ impl LinearBacktracking {
     /// Use `solve` for solving the puzzle
     /// # Returns
     /// boolean if able to continue in another solve step
-    fn solve_step(board: &mut impl SudokuBoardOps, pos: USizeVec2) -> bool {
+    fn solve_step(board: &mut impl BoardOps, pos: USizeVec2) -> bool {
         // let mut it = board.0.iter();
         // if let Some((pos, value)) = it.next() {}
         if pos.y == 9 {
@@ -48,7 +48,7 @@ impl LinearBacktracking {
     }
 }
 
-impl<T: SudokuBoardOps> SudokuSolver<T> for LinearBacktracking {
+impl<T: BoardOps> Solver<T> for LinearBacktracking {
     fn solve(mut board: T) -> Option<T> {
         if Self::solve_step(&mut board, USizeVec2::splat(0)) {
             Some(board)
@@ -58,7 +58,10 @@ impl<T: SudokuBoardOps> SudokuSolver<T> for LinearBacktracking {
     }
 }
 
+#[cfg(test)]
 #[test]
-fn able_to_solve() {
-    crate::strategy::run_sudoku_solver::<LinearBacktracking>();
+fn run_solver() {
+    use crate::solver::test::run_tracked_solver;
+
+    run_tracked_solver::<LinearBacktracking>();
 }
